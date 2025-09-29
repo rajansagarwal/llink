@@ -61,40 +61,25 @@ def infer(foreign_text: str, task_type: str = "translate_to_english", strict: bo
     device = "cuda"
     hf_token = _prepare_environment()
 
-    print(f"[infer] Task: {task_type}")
-    print(f"[infer] Foreign text: {foreign_text[:100]}...")
 
     components = load_stage_b_components(cfg, hf_token, device)
-    print("[infer] ✓ special token rows restored")
-    print(f"[infer] Loaded expander: K={cfg.k_slots} slots")
-    print(f"[infer] Gate value: {float(torch.tanh(components.adapter.g)):.3f}")
 
     prompt = build_prompt(cfg, task_type, strict)
-    print(f"[infer] Prompt: {prompt}")
 
     try:
         input_ids, attention, positions = tokenize_prompt(cfg, components.tokenizer, prompt, device)
     except ValueError as exc:
         return f"ERROR: {exc}"
-    print(f"[infer] Input length: {input_ids.size(1)}, K-slot positions: {positions}")
 
     slot_outputs = stage_a_slots(components, cfg, foreign_text, gate_boost)
-    print(f"[infer] Norm before scale: {float(slot_outputs['projector'].norm()):.3f}")
-    print(f"[infer] Norm after scale: {float(slot_outputs['scaled'].norm()):.3f}")
-    print(f"[infer] Adapted vector norm: {float(slot_outputs['adapted'].norm()):.3f}")
-    print(f"[infer] Expanded slots shape: {tuple(slot_outputs['slots'].shape)}")
 
     embeddings, original_norms, new_norms = inject_slots(
         components.base_model, input_ids, slot_outputs["slots"], positions
     )
-    print(f"[infer] Original norms: {[f'{x:.3f}' for x in original_norms]}")
-    print(f"[infer] New slot norms: {[f'{x:.3f}' for x in new_norms]}")
-    print(f"[infer] Injected {cfg.k_slots} slots at positions: {positions}")
 
     position_ids = (attention.cumsum(-1) - 1).clamp_min(0)
     ablation_embeddings = zeroed_embeddings(components.base_model, input_ids, positions)
 
-    print("[infer] Running ablation test + base model comparison...")
 
     bad_words_ids = []
     generation_kwargs = dict(
@@ -138,23 +123,14 @@ def infer(foreign_text: str, task_type: str = "translate_to_english", strict: bo
     zero_vec = components.tokenizer.decode(generated_zero[0], skip_special_tokens=True).strip()
     base_vec = components.tokenizer.decode(generated_base[0], skip_special_tokens=True).strip()
 
-    print(f"\n=== OUR METHOD (Stage-B + Foreign Vector) ===\n{with_vec}")
-    print(f"\n=== ABLATION (Zeroed Foreign Slot) ===\n{zero_vec}")
-    print(f"\n=== BASE LLAMA 3.2 INSTRUCT ===\n{base_vec}")
 
     if with_vec == zero_vec:
-        print("\n[WARNING] Our method = Ablation - foreign vector may not be used!")
-    else:
-        print("\n[SUCCESS] Our method differs from ablation - foreign vector is used!")
+        print("[WARNING] Foreign vector may not be used (matches ablation).")
     if with_vec == base_vec:
-        print("[WARNING] Our method = Base Llama - no improvement shown!")
-    else:
-        print("[SUCCESS] Our method differs from Base Llama!")
+        print("[WARNING] Output matches base Llama; no improvement detected.")
 
     full_text = components.tokenizer.decode(generated_with[0], skip_special_tokens=True)
     result = full_text.split("Assistant:")[-1].strip() if "Assistant:" in full_text else full_text.strip()
-    print(f"\n=== OUTPUT ===\n{result}")
-    print(f"\n[infer] Settings: strict={strict}, gate_boost={gate_boost}")
     return result
 
 
