@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import os
-from typing import Iterable, List, Sequence, Set
-
 import torch
 
 
@@ -19,5 +17,3 @@ def restore_special_rows(model, tokenizer, path: str) -> None:
                 device=embedding_weight.device,
             )
             embedding_weight[idx].copy_(row)
-
-

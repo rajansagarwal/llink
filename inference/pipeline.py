@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Dict, List, Sequence, Tuple
 
 import torch
-import torch.nn.functional as F
 from peft import PeftModel
 from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
 
@@ -32,7 +31,9 @@ class StageBComponents:
     device: str
 
 
-def load_stage_b_components(cfg: InferenceConfig, hf_token: str, device: str) -> StageBComponents:
+def load_stage_b_components(
+    cfg: InferenceConfig, hf_token: str, device: str
+) -> StageBComponents:
     x_tokenizer = AutoTokenizer.from_pretrained(cfg.xlm, use_fast=True)
     x_encoder = AutoModel.from_pretrained(cfg.xlm).to(device).eval()
 
@@ -42,9 +43,13 @@ def load_stage_b_components(cfg: InferenceConfig, hf_token: str, device: str) ->
         torch_dtype=torch.bfloat16,
         token=hf_token,
     )
-    tokenizer = AutoTokenizer.from_pretrained(cfg.llama_repo, use_fast=True, token=hf_token)
+    tokenizer = AutoTokenizer.from_pretrained(
+        cfg.llama_repo, use_fast=True, token=hf_token
+    )
 
-    special_tokens = [cfg.open_tok, cfg.close_tok, cfg.emb_tok] + [f"<f{i}>" for i in range(cfg.k_slots)]
+    special_tokens = [cfg.open_tok, cfg.close_tok, cfg.emb_tok] + [
+        f"<f{i}>" for i in range(cfg.k_slots)
+    ]
     tokenizer.add_special_tokens({"additional_special_tokens": special_tokens})
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -70,7 +75,9 @@ def load_stage_b_components(cfg: InferenceConfig, hf_token: str, device: str) ->
 
     foreign_scale = ForeignScale(hidden).to(device).eval()
     if os.path.exists(cfg.foreign_scale_path):
-        foreign_scale.load_state_dict(torch.load(cfg.foreign_scale_path, map_location="cpu"))
+        foreign_scale.load_state_dict(
+            torch.load(cfg.foreign_scale_path, map_location="cpu")
+        )
     else:
         with torch.no_grad():
             median = base_model.get_input_embeddings().weight.norm(dim=1).median()
@@ -101,11 +108,15 @@ def build_prompt(cfg: InferenceConfig, task_type: str, strict: bool) -> str:
     elif task_type == "extract_main_points":
         instruction = "Extract the main points from the foreign text in English."
     else:
-        instruction = f"{task_type.replace('_', ' ').title()} the foreign text in English."
+        instruction = (
+            f"{task_type.replace('_', ' ').title()} the foreign text in English."
+        )
 
     suffix = "Answer in English only."
     if strict:
-        suffix += " Output ONLY the translation; do not explain or describe. No extra words."
+        suffix += (
+            " Output ONLY the translation; do not explain or describe. No extra words."
+        )
 
     slot_tokens = " ".join(f"<f{i}>" for i in range(cfg.k_slots))
     user_input = (
@@ -116,8 +127,16 @@ def build_prompt(cfg: InferenceConfig, task_type: str, strict: bool) -> str:
     return f"User: {user_input}\nAssistant:"
 
 
-def tokenize_prompt(cfg: InferenceConfig, tokenizer, prompt: str, device: str) -> Tuple[torch.Tensor, torch.Tensor, List[int]]:
-    encoded = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=cfg.max_src_tokens, add_special_tokens=True)
+def tokenize_prompt(
+    cfg: InferenceConfig, tokenizer, prompt: str, device: str
+) -> Tuple[torch.Tensor, torch.Tensor, List[int]]:
+    encoded = tokenizer(
+        prompt,
+        return_tensors="pt",
+        truncation=True,
+        max_length=cfg.max_src_tokens,
+        add_special_tokens=True,
+    )
     input_ids = encoded.input_ids.to(device)
     attention = encoded.attention_mask.to(device)
 
@@ -158,7 +177,9 @@ def stage_a_slots(
         if abs(gate_boost - 1.0) > 1e-6:
             boosted = scaled + gate_boost * (adapted - scaled)
             target_norm = scaled.norm(dim=-1, keepdim=True).clamp_min(1e-6)
-            adapted = boosted * (target_norm / boosted.norm(dim=-1, keepdim=True).clamp_min(1e-6))
+            adapted = boosted * (
+                target_norm / boosted.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+            )
         slots = components.expander(adapted)
 
     return {
@@ -185,10 +206,13 @@ def inject_slots(
     return embeddings, original_norms, new_norms
 
 
-def zeroed_embeddings(base_model, input_ids: torch.Tensor, positions: Sequence[int]) -> torch.Tensor:
+def zeroed_embeddings(
+    base_model, input_ids: torch.Tensor, positions: Sequence[int]
+) -> torch.Tensor:
     embeddings = base_model.get_input_embeddings()(input_ids)
     for position in positions:
-        original = base_model.get_input_embeddings()(input_ids[:, position : position + 1])[0, 0, :]
+        original = base_model.get_input_embeddings()(
+            input_ids[:, position : position + 1]
+        )[0, 0, :]
         embeddings[0, position, :] = original
     return embeddings
-

@@ -55,19 +55,30 @@ def _baseline_model(hf_token: str, tokenizer, cfg, device: str):
     return base_model
 
 
-@app.function(image=image, gpu="H100", volumes={"/vol": volume}, secrets=[Secret.from_name("hf-token")])
-def infer(foreign_text: str, task_type: str = "translate_to_english", strict: bool = False, gate_boost: float = 1.0):
+@app.function(
+    image=image,
+    gpu="H100",
+    volumes={"/vol": volume},
+    secrets=[Secret.from_name("hf-token")],
+)
+def infer(
+    foreign_text: str,
+    task_type: str = "translate_to_english",
+    strict: bool = False,
+    gate_boost: float = 1.0,
+):
     cfg = default_cfg()
     device = "cuda"
     hf_token = _prepare_environment()
-
 
     components = load_stage_b_components(cfg, hf_token, device)
 
     prompt = build_prompt(cfg, task_type, strict)
 
     try:
-        input_ids, attention, positions = tokenize_prompt(cfg, components.tokenizer, prompt, device)
+        input_ids, attention, positions = tokenize_prompt(
+            cfg, components.tokenizer, prompt, device
+        )
     except ValueError as exc:
         return f"ERROR: {exc}"
 
@@ -79,7 +90,6 @@ def infer(foreign_text: str, task_type: str = "translate_to_english", strict: bo
 
     position_ids = (attention.cumsum(-1) - 1).clamp_min(0)
     ablation_embeddings = zeroed_embeddings(components.base_model, input_ids, positions)
-
 
     bad_words_ids = []
     generation_kwargs = dict(
@@ -119,10 +129,15 @@ def infer(foreign_text: str, task_type: str = "translate_to_english", strict: bo
             no_repeat_ngram_size=3,
         )
 
-    with_vec = components.tokenizer.decode(generated_with[0], skip_special_tokens=True).strip()
-    zero_vec = components.tokenizer.decode(generated_zero[0], skip_special_tokens=True).strip()
-    base_vec = components.tokenizer.decode(generated_base[0], skip_special_tokens=True).strip()
-
+    with_vec = components.tokenizer.decode(
+        generated_with[0], skip_special_tokens=True
+    ).strip()
+    zero_vec = components.tokenizer.decode(
+        generated_zero[0], skip_special_tokens=True
+    ).strip()
+    base_vec = components.tokenizer.decode(
+        generated_base[0], skip_special_tokens=True
+    ).strip()
 
     if with_vec == zero_vec:
         print("[WARNING] Foreign vector may not be used (matches ablation).")
@@ -130,12 +145,23 @@ def infer(foreign_text: str, task_type: str = "translate_to_english", strict: bo
         print("[WARNING] Output matches base Llama; no improvement detected.")
 
     full_text = components.tokenizer.decode(generated_with[0], skip_special_tokens=True)
-    result = full_text.split("Assistant:")[-1].strip() if "Assistant:" in full_text else full_text.strip()
+    result = (
+        full_text.split("Assistant:")[-1].strip()
+        if "Assistant:" in full_text
+        else full_text.strip()
+    )
     return result
 
 
-@app.function(image=image, gpu="H100", volumes={"/vol": volume}, secrets=[Secret.from_name("hf-token")])
-def lexeme_probe(foreign_text: str, cand_csv: str = "banana,bananas,eat,eating,day,good,some"):
+@app.function(
+    image=image,
+    gpu="H100",
+    volumes={"/vol": volume},
+    secrets=[Secret.from_name("hf-token")],
+)
+def lexeme_probe(
+    foreign_text: str, cand_csv: str = "banana,bananas,eat,eating,day,good,some"
+):
     cfg = default_cfg()
     device = "cuda"
     hf_token = _prepare_environment()
@@ -143,7 +169,9 @@ def lexeme_probe(foreign_text: str, cand_csv: str = "banana,bananas,eat,eating,d
     components = load_stage_b_components(cfg, hf_token, device)
 
     prompt = build_prompt(cfg, "translate_to_english", strict=True)
-    input_ids, attention, positions = tokenize_prompt(cfg, components.tokenizer, prompt, device)
+    input_ids, attention, positions = tokenize_prompt(
+        cfg, components.tokenizer, prompt, device
+    )
 
     slot_outputs = stage_a_slots(components, cfg, foreign_text, gate_boost=1.0)
     slots = slot_outputs["slots"]
@@ -181,8 +209,12 @@ def lexeme_probe(foreign_text: str, cand_csv: str = "banana,bananas,eat,eating,d
 
     topk = torch.topk(similarities, k=30)
     print("\n[A] Nearest neighbors to slot-mean (top-30):")
-    for rank, (idx, score) in enumerate(zip(topk.indices.tolist(), topk.values.tolist()), 1):
-        print(f"{rank:2d}. {components.tokenizer.decode([idx])!r:20s}  cos={score:.4f}  id={idx}")
+    for rank, (idx, score) in enumerate(
+        zip(topk.indices.tolist(), topk.values.tolist()), 1
+    ):
+        print(
+            f"{rank:2d}. {components.tokenizer.decode([idx])!r:20s}  cos={score:.4f}  id={idx}"
+        )
 
     def _forms(phrase: str) -> List[str]:
         variants = {phrase, phrase.lower(), phrase.capitalize()}
@@ -209,7 +241,10 @@ def lexeme_probe(foreign_text: str, cand_csv: str = "banana,bananas,eat,eating,d
             row.append(
                 f"id={idx} rank={ranks[idx]} cos={similarities[idx].item():.4f} str={components.tokenizer.decode([idx])!r}"
             )
-        print(f"  {candidate:10s} -> " + (" | ".join(row) if row else "(no single-token form)"))
+        print(
+            f"  {candidate:10s} -> "
+            + (" | ".join(row) if row else "(no single-token form)")
+        )
 
     delta = logits_with - logits_zero
     print("\n[B] Candidate next-token logits (WITH vs ZEROED):")
@@ -219,7 +254,10 @@ def lexeme_probe(foreign_text: str, cand_csv: str = "banana,bananas,eat,eating,d
             row.append(
                 f"id={idx} Δ={delta[idx].item():+.3f} with={logits_with[idx].item():.3f} zero={logits_zero[idx].item():.3f} str={components.tokenizer.decode([idx])!r}"
             )
-        print(f"  {candidate:10s} -> " + (" | ".join(row) if row else "(no single-token form)"))
+        print(
+            f"  {candidate:10s} -> "
+            + (" | ".join(row) if row else "(no single-token form)")
+        )
 
     with torch.no_grad():
         top_with = torch.topk(logits_with, k=30).indices.tolist()
@@ -233,7 +271,12 @@ def lexeme_probe(foreign_text: str, cand_csv: str = "banana,bananas,eat,eating,d
     return "OK"
 
 
-@app.function(image=image, gpu="H100", volumes={"/vol": volume}, secrets=[Secret.from_name("hf-token")])
+@app.function(
+    image=image,
+    gpu="H100",
+    volumes={"/vol": volume},
+    secrets=[Secret.from_name("hf-token")],
+)
 def test_batch(foreign_texts: List[str], task_type: str = "translate_to_english"):
     cfg = default_cfg()
     device = "cuda"
@@ -257,10 +300,16 @@ def test_batch(foreign_texts: List[str], task_type: str = "translate_to_english"
         vectors = components.projector(pooled)
 
         if len(foreign_texts) >= 2:
-            cos = F.cosine_similarity(vectors.unsqueeze(0), vectors.unsqueeze(1), dim=-1)
+            cos = F.cosine_similarity(
+                vectors.unsqueeze(0), vectors.unsqueeze(1), dim=-1
+            )
             upper = cos[torch.triu(torch.ones_like(cos), diagonal=1) == 1]
-            print(f"[diversity] mean={float(upper.mean()):.3f} max={float(upper.max()):.3f}")
-            print(f"[diversity] norms={[float(vectors[i].norm()) for i in range(len(foreign_texts))]}")
+            print(
+                f"[diversity] mean={float(upper.mean()):.3f} max={float(upper.max()):.3f}"
+            )
+            print(
+                f"[diversity] norms={[float(vectors[i].norm()) for i in range(len(foreign_texts))]}"
+            )
             return float(upper.mean()), float(upper.max())
 
     return None, None
