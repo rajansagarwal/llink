@@ -1,4 +1,4 @@
-# LLINK
+# LLINK — Langauges are New Modalities
 
 Implementation of paper [Languages are New Modalities: Cross-Lingual Alignment via Encoder Injection](https://example.com)
 
