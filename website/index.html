@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLINK: Languages Are New Modalities</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1 class="title">LLINK: Languages Are New Modalities</h1>
+            <h2 class="subtitle">Cross-Lingual Alignment via Encoder Injection</h2>
+            
+            <div class="authors">
+                <div class="author">
+                    <a href="mailto:r34agarw@uwaterloo.ca">Rajan Agarwal</a>
+                    <div class="affiliation">University of Waterloo</div>
+                </div>
+                <div class="author">
+                    <a href="mailto:hiaarushgupta@gmail.com">Aarush Gupta</a>
+                    <div class="affiliation">Cohere Labs Community</div>
+                </div>
+            </div>
+
+            <div class="links">
+                <a href="https://github.com/rajansagarwal/llink" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    Code
+                </a>
+                <a href="#" class="btn btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Paper
+                </a>
+            </div>
+        </header>
+
+        <section class="abstract">
+            <h2>Abstract</h2>
+            <p>
+                Instruction-tuned Large Language Models (LLMs) underperform on low-resource, non-Latin scripts due to tokenizer fragmentation and weak cross-lingual coupling. We present <strong>LLINK</strong> (Large Language Injection for Non-English Knowledge), a compute-efficient language-as-modality method that conditions an instruction-tuned decoder without changing the tokenizer or retraining the decoder.
+            </p>
+            <p>
+                First, we align sentence embeddings from a frozen multilingual encoder to the decoder's latent embedding space at a reserved position via a lightweight contrastive projector. Second, the vector is expanded into K soft slots and trained with minimal adapters so the frozen decoder consumes the signal.
+            </p>
+            <p>
+                LLINK substantially improves bilingual retrieval and achieves <strong>84% preference</strong> over the base model and <strong>64% preference</strong> over direct finetuning in LLM-judged Q&A evaluations. We further find that improvements can be attributed to reduced tokenization inflation and a stronger cross-lingual alignment, despite the model having residual weaknesses in numeric fidelity.
+            </p>
+        </section>
+
+        <section class="architecture">
+            <h2>Architecture</h2>
+            <div class="architecture-content">
+                <img src="../images/architecture.png" alt="LLINK Architecture Diagram" class="architecture-img">
+                <p class="caption">
+                    LLINK treats low-resource languages as a modality, passing multilingual text through a projection model to match the LLM's embedding space, then to the decoder to produce output.
+                </p>
+            </div>
+        </section>
+
+        <section class="key-results">
+            <h2>Key Results</h2>
+            
+            <div class="results-grid">
+                <div class="result-card">
+                    <h3>Bilingual Retrieval</h3>
+                    <div class="metric">
+                        <div class="metric-value">45.0%</div>
+                        <div class="metric-label">R@1 (4.3× improvement)</div>
+                    </div>
+                    <p>LLINK achieves dramatic improvements in cross-lingual alignment, with Recall@1 improving from 10.4% (direct fine-tune) to 45.0%.</p>
+                </div>
+
+                <div class="result-card">
+                    <h3>LLM-as-Judge Preference</h3>
+                    <div class="metric">
+                        <div class="metric-value">84%</div>
+                        <div class="metric-label">vs. Base Model</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">64%</div>
+                        <div class="metric-label">vs. Direct Fine-tuning</div>
+                    </div>
+                    <p>LLINK outputs are strongly preferred in blind A/B comparisons judged by Llama 3.1 70B.</p>
+                </div>
+
+                <div class="result-card">
+                    <h3>Token Efficiency</h3>
+                    <div class="metric">
+                        <div class="metric-value">3×</div>
+                        <div class="metric-label">Fewer Decoder Tokens</div>
+                    </div>
+                    <p>By replacing 104 fragmented Khmer tokens with 8 semantic slots, LLINK dramatically reduces computational cost.</p>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3>Detailed Retrieval Results</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>R@1</th>
+                            <th>R@5</th>
+                            <th>R@10</th>
+                            <th>MRR</th>
+                            <th>Mean Rank</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Direct Fine-tune</td>
+                            <td>0.104</td>
+                            <td>0.248</td>
+                            <td>0.352</td>
+                            <td>0.160</td>
+                            <td>24.7</td>
+                        </tr>
+                        <tr>
+                            <td>LLINK (Stage A)</td>
+                            <td>0.430</td>
+                            <td>0.706</td>
+                            <td>0.819</td>
+                            <td>0.642</td>
+                            <td>3.8</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>LLINK (Full)</td>
+                            <td>0.450</td>
+                            <td>0.724</td>
+                            <td>0.835</td>
+                            <td>0.660</td>
+                            <td>3.4</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="method">
+            <h2>Method Overview</h2>
+            
+            <div class="method-stages">
+                <div class="stage">
+                    <div class="stage-header">
+                        <div class="stage-number">Stage A</div>
+                        <h3>Contrastive Alignment</h3>
+                    </div>
+                    <p>
+                        Train a lightweight projection model that maps XLM-RoBERTa embeddings (768-dim) to Llama's hidden space (2048-dim) using contrastive learning with hard negative mining.
+                    </p>
+                    <ul>
+                        <li>Frozen multilingual encoder (XLM-R)</li>
+                        <li>Two-layer MLP projector with GELU activation</li>
+                        <li>InfoNCE loss with temperature annealing</li>
+                        <li>32,768-item memory queue for hard negatives</li>
+                    </ul>
+                </div>
+
+                <div class="stage">
+                    <div class="stage-header">
+                        <div class="stage-number">Stage B</div>
+                        <h3>Multi-Token Injection</h3>
+                    </div>
+                    <p>
+                        Expand the aligned vector into K=8 soft slots and train minimal adapters so the frozen decoder learns to consume the foreign language signal.
+                    </p>
+                    <ul>
+                        <li>Token expander: 1 vector → 8 soft slots</li>
+                        <li>LoRA adapters on attention and MLP layers</li>
+                        <li>Usage-enforcing objective to prevent signal ignoring</li>
+                        <li>Auxiliary alignment losses for stability</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tokenization-comparison">
+                <h3>Tokenization Fragmentation Problem</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <div class="language-label">English</div>
+                        <div class="token-count">16 tokens</div>
+                        <div class="token-ratio">0.3 tokens/char</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="language-label">Khmer (Latin)</div>
+                        <div class="token-count">35 tokens</div>
+                        <div class="token-ratio">0.5 tokens/char</div>
+                    </div>
+                    <div class="comparison-item highlight">
+                        <div class="language-label">Khmer (Native)</div>
+                        <div class="token-count">104 tokens</div>
+                        <div class="token-ratio">1.7 tokens/char</div>
+                    </div>
+                </div>
+                <p class="note">
+                    The same sentence tokenized with Llama-3.2-1B tokenizer shows severe fragmentation for non-Latin scripts. LLINK bypasses this by treating Khmer as a modality.
+                </p>
+            </div>
+        </section>
+
+        <section class="citation">
+            <h2>Citation</h2>
+            <pre><code>@article{agarwal2025llink,
+  title={Languages Are New Modalities: Cross-Lingual Alignment via Encoder Injection},
+  author={Agarwal, Rajan and Gupta, Aarush},
+  journal={arXiv preprint},
+  year={2025}
+}</code></pre>
+        </section>
+
+        <footer>
+            <p>
+                We thank the Cohere for AI Lab for their support, Modal team for compute infrastructure, the ParaCrawl project for parallel data, and the XLM-R and LLaMA teams for open-source models that made this work possible.
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
