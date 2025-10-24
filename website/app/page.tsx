@@ -32,7 +32,7 @@ export default function ResearchPaperPage() {
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4 font-sans">
             Abstract
           </h2>
-          <p className="text-[17px] leading-relaxed text-gray-800">
+          <p className="text-[17px] leading-relaxed text-gray-800 text-pretty text-balance">
             Instruction-tuned large language models underperform on low-resource, non-Latin scripts due to tokenizer
             fragmentation and weak cross-lingual coupling. We present LLINK (Large Language Injection for Non-English
             Knowledge), a compute-efficient language-as-modality method that conditions an instruction-tuned decoder
@@ -51,7 +51,7 @@ export default function ResearchPaperPage() {
         <h2 className="text-2xl font-semibold text-black mb-3 mt-12">Summary</h2>
         <ul className="space-y-3 text-[17px] leading-relaxed text-gray-800 mb-8">
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>
               LLINK casts low-resource languages as a modality: Khmer sentences are encoded once by a frozen multilingual
               encoder and injected as dense vectors into Llama-3.2-1B, bypassing brittle tokenization while leaving the
@@ -59,7 +59,7 @@ export default function ResearchPaperPage() {
             </span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>
               A two-stage alignment pipeline first teaches the projector to land in the decoder&apos;s latent space at a reserved
               slot, then expands that signal into eight soft tokens and applies minimal adapters plus a usage penalty so
@@ -67,7 +67,7 @@ export default function ResearchPaperPage() {
             </span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>
               The method slashes decoder token counts, roughly triples retrieval accuracy, and drives strong win rates in
               LLM-as-judge evaluations while still revealing open issues around numeric fidelity and literal translation.
@@ -142,23 +142,23 @@ export default function ResearchPaperPage() {
         <h2 className="text-2xl font-semibold text-black mb-3">Key results</h2>
         <ul className="space-y-3 text-[17px] leading-relaxed text-gray-800 mb-8">
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>Retrieval: recall@1 climbs from 0.10 (direct LoRA finetune) to 0.45, recall@5 hits 0.724, recall@10 reaches 0.835, mean reciprocal rank lands at 0.66, and mean rank drops to 3.4.</span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>Stage contribution: Stage A alone delivers recall@1 of 0.43 and mean rank 3.8, with Stage B adding a modest bump and better usage of the injected slots.</span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>LLM-as-judge: on 200 understanding prompts LLINK wins 74 percent versus the base model and 49 percent versus the finetune; on 200 Q and A prompts wins are 51 percent and 42 percent respectively, yielding overall preferences of 84 percent and 64 percent.</span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>Token budget: Khmer prompts compress from 100-plus decoder tokens to eight soft slots, cutting decoder compute roughly three times while amortizing a single encoder pass.</span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>Preference taxonomy: LLINK excels on semantic understanding tasks while literal translation remains the hardest setting due to slot compression.</span>
           </li>
         </ul>
@@ -184,15 +184,15 @@ export default function ResearchPaperPage() {
         <h2 className="text-2xl font-semibold text-black mb-3">Qualitative Behavior</h2>
         <ul className="space-y-3 text-[17px] leading-relaxed text-gray-800 mb-8">
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>Positive cases: LLINK correctly surfaces policies about data sharing, restart dates for classes, and specific categorical labels where the base model outputs mixed Khmer or vague paraphrases.</span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>Negative cases: numeric fidelity is the recurring failure, with power ratings and quantities drifting, and literal translation prompts can trigger over-summarization.</span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>The analysis section links these errors to how multilingual encoders represent numbers on near logarithmic scales, making 30 and 1.5 surprisingly close in embedding space.</span>
           </li>
         </ul>
@@ -223,28 +223,28 @@ export default function ResearchPaperPage() {
         <h2 className="text-2xl font-semibold text-black mb-3">Future Work</h2>
         <ul className="space-y-3 text-[17px] leading-relaxed text-gray-800">
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>
               Extend the slot interface to more languages, including right-to-left scripts and logographic systems, and
               test larger decoder backbones whose stronger English priors may require heavier usage penalties or larger K.
             </span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>
               Predict slot count dynamically so short prompts can use two to four tokens while dense documents receive a
               wider channel, potentially via a lightweight classifier that looks at encoder entropy or length.
             </span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>
               Add copy-aware or numeric-preserving pathways so exact values survive the compression process, for example
               by dedicating slots to numerals or supervising attention from slots to output tokens.
             </span>
           </li>
           <li className="flex">
-            <span className="mr-3 text-gray-400">&bull;</span>
+            <span className="mr-4 text-gray-400">&bull;</span> 
             <span>
               Explore many-to-many transfer by pairing the slot projector with multiple teacher positions or targeting a
               language-agnostic intermediate space, enabling cross-lingual retrieval and generation beyond Khmer-English.
